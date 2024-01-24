@@ -589,7 +589,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		/* Transmit with SPI */
 		IOIF_TransmitSPIData();
 
-
 		/* Test Data Update */
 		cnt++;
 		if (cnt == 1000){
