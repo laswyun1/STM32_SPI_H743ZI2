@@ -156,8 +156,7 @@ SECTIONS
   .spi_test_buffer (NOLOAD) :
   {
   	. = ABSOLUTE(0x30000000);
-  	*(.spi1RxBuff)
-  	*(.spi2TxBuff)
+  	*(.spi2RxBuff)
   } >RAM_D2
 
 

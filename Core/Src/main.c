@@ -101,179 +101,9 @@ typedef struct _IOIF_SPIObj_t {
 
 /* USER CODE BEGIN PV */
 /* For DMA SPI Communication (with DMA) */
-static uint8_t spi1CommDmaRxBuff[DATA_TOTAL_BYTE] __attribute__((section(".spi1RxBuff"))) = {0};
-static uint8_t spi2CommDmaTxBuff[DATA_TOTAL_BYTE] __attribute__((section(".spi2TxBuff"))) = {0};
+static uint8_t spi2CommDmaRxBuff[DATA_TOTAL_BYTE] __attribute__((section(".spi2RxBuff"))) = {0};
 
 uint8_t rxByteDataArray[DATA_TOTAL_BYTE] = {0};
-
-IOIF_SPIObj_t* spiPtr = NULL;
-IOIF_SPIObj_t spiTxObj = {0};
-
-
-/* Transmission */
-uint8_t AppendSPIData(IOIF_SPIDataType_t dataType, void* dataAddr)
-{
-	spiPtr = &spiTxObj;
-
-	if (dataType == SPI_DOUBLE){
-		spiPtr->doubleSPIData[spiPtr->doubleIndex] = *((double*)dataAddr);
-		spiPtr->dataTypeArray[spiPtr->totalDataNum] = SPI_DOUBLE;
-
-		spiPtr->doubleIndex++;
-		spiPtr->totalDataNum++;
-		spiPtr->totalDataByte += sizeof(double);
-	}
-	else if (dataType == SPI_FLOAT){
-		spiPtr->floatSPIData[spiPtr->floatIndex] = *((float*)dataAddr);
-		spiPtr->dataTypeArray[spiPtr->totalDataNum] = SPI_FLOAT;
-
-		spiPtr->floatIndex++;
-		spiPtr->totalDataNum++;
-		spiPtr->totalDataByte += sizeof(float);
-	}
-	else if (dataType == SPI_INT32){
-		spiPtr->int32SPIData[spiPtr->int32Index] = *((int32_t*)dataAddr);
-		spiPtr->dataTypeArray[spiPtr->totalDataNum] = SPI_INT32;
-
-		spiPtr->int32Index++;
-		spiPtr->totalDataNum++;
-		spiPtr->totalDataByte += sizeof(int32_t);
-	}
-	else if (dataType == SPI_UINT32){
-		spiPtr->uint32SPIData[spiPtr->uint32Index] = *((uint32_t*)dataAddr);
-		spiPtr->dataTypeArray[spiPtr->totalDataNum] = SPI_UINT32;
-
-		spiPtr->uint32Index++;
-		spiPtr->totalDataNum++;
-		spiPtr->totalDataByte += sizeof(uint32_t);
-	}
-	else if (dataType == SPI_INT16){
-		spiPtr->int16SPIData[spiPtr->int16Index] = *((int16_t*)dataAddr);
-		spiPtr->dataTypeArray[spiPtr->totalDataNum] = SPI_INT16;
-
-		spiPtr->int16Index++;
-		spiPtr->totalDataNum++;
-		spiPtr->totalDataByte += sizeof(int16_t);
-	}
-	else if (dataType == SPI_UINT16){
-		spiPtr->uint16SPIData[spiPtr->uint16Index] = *((uint16_t*)dataAddr);
-		spiPtr->dataTypeArray[spiPtr->totalDataNum] = SPI_UINT16;
-
-		spiPtr->uint16Index++;
-		spiPtr->totalDataNum++;
-		spiPtr->totalDataByte += sizeof(uint16_t);
-	}
-	else if (dataType == SPI_INT8){
-		spiPtr->int8SPIData[spiPtr->int8Index] = *((int8_t*)dataAddr);
-		spiPtr->dataTypeArray[spiPtr->totalDataNum] = SPI_INT8;
-
-		spiPtr->int8Index++;
-		spiPtr->totalDataNum++;
-		spiPtr->totalDataByte += sizeof(int8_t);
-	}
-	else if (dataType == SPI_UINT8){
-		spiPtr->uint8SPIData[spiPtr->uint8Index] = *((uint8_t*)dataAddr);
-		spiPtr->dataTypeArray[spiPtr->totalDataNum] = SPI_UINT8;
-
-		spiPtr->uint8Index++;
-		spiPtr->totalDataNum++;
-		spiPtr->totalDataByte += sizeof(uint8_t);
-	}
-	else {
-		return 1;
-		// Error Check
-	}
-
-	return 0;
-}
-
-
-uint8_t ParseSPIData(void)
-{
-	spiPtr = &spiTxObj;
-
-	static uint8_t doubleInd = 0;
-	static uint8_t floatInd = 0;
-	static uint8_t int32Ind = 0;
-	static uint8_t uint32Ind = 0;
-	static uint8_t int16Ind = 0;
-	static uint8_t uint16Ind = 0;
-	static uint8_t int8Ind = 0;
-	static uint8_t uint8Ind = 0;
-
-	static uint16_t ind = 0;
-
-	/* 1st data is "totalDataNum" */
-	memcpy(&spiPtr->ParsedSPIByteData[ind], &spiPtr->totalDataNum, 1);
-	ind++;
-
-	/* Remained data has the form of "dataType, parsedData" */
-	for (uint8_t i = 0; i < spiPtr->totalDataNum; i++){
-		if (spiPtr->dataTypeArray[i] == SPI_DOUBLE){
-			memcpy(&spiPtr->ParsedSPIByteData[ind], &spiPtr->dataTypeArray[i], 1);
-			memcpy(&spiPtr->ParsedSPIByteData[ind + 1], &spiPtr->doubleSPIData[doubleInd], sizeof(double));
-			doubleInd++;
-			ind = ind + sizeof(double) + 1;
-		}
-		else if (spiPtr->dataTypeArray[i] == SPI_FLOAT){
-			memcpy(&spiPtr->ParsedSPIByteData[ind], &spiPtr->dataTypeArray[i], 1);
-			memcpy(&spiPtr->ParsedSPIByteData[ind + 1], &spiPtr->floatSPIData[floatInd], sizeof(float));
-			floatInd++;
-			ind = ind + sizeof(float) + 1;
-		}
-		else if (spiPtr->dataTypeArray[i] == SPI_INT32){
-			memcpy(&spiPtr->ParsedSPIByteData[ind], &spiPtr->dataTypeArray[i], 1);
-			memcpy(&spiPtr->ParsedSPIByteData[ind + 1], &spiPtr->floatSPIData[int32Ind], sizeof(int32_t));
-			int32Ind++;
-			ind = ind + sizeof(int32_t) + 1;
-		}
-		else if (spiPtr->dataTypeArray[i] == SPI_UINT32){
-			memcpy(&spiPtr->ParsedSPIByteData[ind], &spiPtr->dataTypeArray[i], 1);
-			memcpy(&spiPtr->ParsedSPIByteData[ind + 1], &spiPtr->uint32SPIData[uint32Ind], sizeof(uint32_t));
-			uint32Ind++;
-			ind = ind + sizeof(uint32_t) + 1;
-		}
-		else if (spiPtr->dataTypeArray[i] == SPI_INT16){
-			memcpy(&spiPtr->ParsedSPIByteData[ind], &spiPtr->dataTypeArray[i], 1);
-			memcpy(&spiPtr->ParsedSPIByteData[ind + 1], &spiPtr->int16SPIData[int16Ind], sizeof(int16_t));
-			int16Ind++;
-			ind = ind + sizeof(int16_t) + 1;
-		}
-		else if (spiPtr->dataTypeArray[i] == SPI_UINT16){
-			memcpy(&spiPtr->ParsedSPIByteData[ind], &spiPtr->dataTypeArray[i], 1);
-			memcpy(&spiPtr->ParsedSPIByteData[ind + 1], &spiPtr->uint16SPIData[uint16Ind], sizeof(uint16_t));
-			uint16Ind++;
-			ind = ind + sizeof(uint16_t) + 1;
-		}
-		else if (spiPtr->dataTypeArray[i] == SPI_INT8){
-			memcpy(&spiPtr->ParsedSPIByteData[ind], &spiPtr->dataTypeArray[i], 1);
-			memcpy(&spiPtr->ParsedSPIByteData[ind + 1], &spiPtr->int8SPIData[int8Ind], sizeof(int8_t));
-			int8Ind++;
-			ind = ind + sizeof(int8_t) + 1;
-		}
-		else if (spiPtr->dataTypeArray[i] == SPI_UINT8){
-			memcpy(&spiPtr->ParsedSPIByteData[ind], &spiPtr->dataTypeArray[i], 1);
-			memcpy(&spiPtr->ParsedSPIByteData[ind + 1], &spiPtr->uint8SPIData[uint8Ind], sizeof(uint8_t));
-			uint8Ind++;
-			ind = ind + sizeof(uint8_t) + 1;
-		}
-	}
-
-	doubleInd = 0;
-	floatInd = 0;
-	int32Ind = 0;
-	uint32Ind = 0;
-	int16Ind = 0;
-	uint16Ind = 0;
-	int8Ind = 0;
-	uint8Ind = 0;
-
-	ind = 0;
-
-	return 0;
-}
-
-
 
 /* Receive */
 void byteValueToRealValue(void* realData, uint8_t* byteData)
@@ -355,14 +185,6 @@ void byteValueToRealValue(void* realData, uint8_t* byteData)
 }
 
 
-/* For Transmitted Values */
-float txData1 = 3.14;
-float txData2 = 4.14;
-float txData3 = 5.14;
-float txData4 = 6.14;
-float txData5 = 7.14;
-float txData6 = 8.14;
-
 
 /* For Received Values */
 float data1;
@@ -398,28 +220,12 @@ void settingSPIReceivedData(uint8_t* byteData)
 //	byteValueToRealValue(&data13, byteData);
 }
 
-
-
-/* Transmit */
-uint8_t IOIF_TransmitSPIData(void)
-{
-	spiPtr = &spiTxObj;
-
-	memset(spi2CommDmaTxBuff, 0, DATA_TOTAL_BYTE);
-	memcpy(spi2CommDmaTxBuff, spiPtr->ParsedSPIByteData, DATA_TOTAL_BYTE);
-	uint8_t txDebug = HAL_SPI_Transmit_DMA(&hspi2, spi2CommDmaTxBuff, DATA_TOTAL_BYTE);
-
-	spiTxObj = (IOIF_SPIObj_t){0};
-
-	return txDebug;
-}
-
 /* Receive */
 uint8_t IOIF_ReceiveSPIData(void)
 {
 	memset(rxByteDataArray, 0, DATA_TOTAL_BYTE);
-	uint8_t rxDebug = HAL_SPI_Receive_DMA(&hspi1, spi1CommDmaRxBuff, DATA_TOTAL_BYTE);
-	memcpy(rxByteDataArray, spi1CommDmaRxBuff, DATA_TOTAL_BYTE);
+	uint8_t rxDebug = HAL_SPI_Receive_DMA(&hspi2, spi2CommDmaRxBuff, DATA_TOTAL_BYTE);
+	memcpy(rxByteDataArray, spi2CommDmaRxBuff, DATA_TOTAL_BYTE);
 	settingSPIReceivedData(rxByteDataArray);
 
 	return rxDebug;
@@ -482,15 +288,17 @@ int main(void)
   MX_DMA_Init();
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
-  MX_SPI1_Init();
   MX_SPI2_Init();
   MX_TIM1_Init();
-  MX_TIM2_Init();
   MX_ETH_Init();
   /* USER CODE BEGIN 2 */
 
+  /* Initialize the buffer */
+  memset(rxByteDataArray, 0, DATA_TOTAL_BYTE);
+  memset(spi2CommDmaRxBuff, 0, DATA_TOTAL_BYTE);
+
+  /* Timer Interrupt Start(1ms) */
   HAL_TIM_Base_Start_IT(&htim1);
-  HAL_TIM_Base_Start_IT(&htim2);
 
   /* USER CODE END 2 */
 
@@ -572,37 +380,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim == &htim1){
 		IOIF_ReceiveSPIData();
 	}
-
-	/* TIM2 : SPI2(Slave) - Transmit */
-	if (htim == &htim2){
-		/* Append data to transmit */
-		AppendSPIData(SPI_FLOAT, &txData1);
-		AppendSPIData(SPI_FLOAT, &txData2);
-		AppendSPIData(SPI_FLOAT, &txData3);
-		AppendSPIData(SPI_FLOAT, &txData4);
-		AppendSPIData(SPI_FLOAT, &txData5);
-		AppendSPIData(SPI_FLOAT, &txData6);
-
-		/* Parse data to byte */
-		ParseSPIData();
-
-		/* Transmit with SPI */
-		IOIF_TransmitSPIData();
-
-
-		/* Test Data Update */
-		cnt++;
-		if (cnt == 1000){
-			cnt = 0;
-			txData1++;
-			txData2++;
-			txData3++;
-			txData4++;
-			txData5++;
-			txData6++;
-		}
-	}
-
 }
 /* USER CODE END 4 */
 
